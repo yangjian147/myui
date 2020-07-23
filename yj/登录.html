@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<link rel="stylesheet" href="../css/bootstrap.min.css" />
+		<link rel="stylesheet" href="../css/tup.css" />
+		<link rel="stylesheet" href="../css/index.css" />
+
+		<style>
+			<style>[v-cloak] {
+				display: none;
+			}
+			.yjcss{
+				margin-bottom: 5px;
+			}
+		</style>
+		</style>
+	</head>
+
+	<body style="background-image: url(../img/20180228110942_zQZSk.jpeg);">
+		<div v-cloak>
+			<el-row id="vmdenglu">
+				<!--图片验证模态框-->
+				
+				<el-col :span="24">
+					<el-row style="height: 90px;">
+						<el-col :span="24">
+
+						</el-col>
+					</el-row>
+					<el-row>
+						<el-col :span="7" push="2">
+							<el-tabs v-model="activeName" stretch type="border-card" @tab-click="handleClick" style="height: 410px;">
+								<el-tab-pane label="账号密码登录" name="first" style="width:250px;color: #000000;">
+									<!--密码登录验证码-->
+									<el-form :rules="rules" ref="ruleForm" label-width="70px" class="demo-ruleForm">
+										<el-form-item class="yjcss"  label="账号:" prop="name" width="30px">
+											<el-input v-model="name" placeholder="请输入账号"></el-input>
+										</el-form-item>
+
+										<el-form-item  class="yjcss" label="密码:" prop="password1">
+											<el-input v-model="password1" placeholder="请输入密码"></el-input>
+										</el-form-item>
+
+										<el-form-item class="yjcss">
+											<div id="captcha"></div>
+										</el-form-item>
+										<el-form-item class="yjcss">
+											<el-button type="primary" @click="denglu2">登录</el-button>
+											<el-button @click="">重置</el-button>
+										</el-form-item>
+								</el-tab-pane>
+								<el-tab-pane label="手机号验证登录">
+									<!--手机号验证登录-->
+									<el-form ref="form" label-width="90px" style="margin-top:50px;">
+										<el-form-item label="手机号码:">
+											<el-input v-model="phone" placeholder="请输入手机号" style="width: 200px;"></el-input>
+										</el-form-item>
+										<el-form-item label="验证码:">
+											<el-input v-model="yanzhengma" placeholder="请输入验证码" style="width: 120px;"></el-input>
+											<el-button type="info" size="mini" style="width:80px;" v-if="pan==1" type="button" @click="faosng">{{fa}}</el-button>
+											<el-button type="info" size="mini" v-if="pan==2" disabled type="button" @click="faosng">{{fa}}</el-button>
+
+										</el-form-item>
+
+										<el-form-item>
+											<el-button type="primary" style="width:200px;" @click="denglu">登录</el-button>
+										</el-form-item>
+									</el-form>
+									
+								</el-tab-pane>
+
+							</el-tabs>
+						</el-col>
+					</el-row>
+				</el-col>
+			</el-row>
+
+		</div>
+	</body>
+	<script type="text/javascript" src="../js/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../js/tup.js"></script>
+
+	<script type="text/javascript" src="../js/jq_ajax_config.js"></script>
+	<script type="text/javascript" src="../js/vue.js"></script>
+	<script type="text/javascript" src="../js/index.js"></script>
+	<script type="text/javascript" src="../js/dialog.js"></script>
+
+	<!---->
+	<script type="text/javascript">
+		var vmdenglu = new Vue({
+			el: "#vmdenglu",
+			data: {
+				dialogVisible: false,
+				activeName: 'first', //用来默认选中那个登录
+				tupianyanzheng: "2",
+				name: "",
+				password1: "",
+				times: 60, //用来计时
+				timer: "", //代表发送验证码按钮
+				fa: "发送验证码",
+				pan: 1, //用来判断是否禁用按钮
+				phone: "", //电话号码
+				span: "", //
+				yanzhengma: "", //输入德验证码
+				yanzhengma2: "", //后台获取到德验证码
+				shoujihao: "1", //用来登录判断是否当前输入号码是获取验证码的号码
+				type: "", //登录权限类型
+			},
+			methods: {
+				/*关闭模态*/
+				handleClose(done) {
+					this.$confirm('确认关闭？')
+						.then(_ => {
+							done();
+						})
+						.catch(_ => {});
+				},
+				//账号密码登录
+				denglu2() {
+					let _this = this;
+					if(_this.name == "" || _this.password1 == "") {
+						_this.open4("账号密码不能为空");
+						return;
+					}
+					if(_this.tupianyanzheng == "2") {
+						_this.open3("请先进行图片验证");
+						return;
+					}
+
+					$.ajax("http://localhost:9999/api/show/denglu1", {
+						type: "post",
+						data: {
+							"name": _this.name,
+							"password": _this.password1
+						},
+						dataType: "json",
+						success(data) {
+							if(data.code == 200) {
+								if(null != data.data) {
+									_this.open2("登录成功");
+								} else {
+									_this.open4("账号密码错误");
+								}
+							}
+						}
+					})
+				},
+				/*手机号登录点击发送验证码*/
+				faosng() {
+					let _this = this;
+					if(_this.phone == "") {
+						_this.open3("手机号不能为空");
+						return;
+					}
+					//验证手机号是否正确
+					$.getJSON(`http://localhost:9999/api/show/denglu2/${_this.phone}`,
+						function(data) {
+							if(data.code == 200) {
+								if(data.data != null) {
+									_this.type = data.type;
+									//如果手机号正确发送验证码
+									$.getJSON(`http://localhost:9999/api/show/dengluyanzhengma/${_this.phone}`,
+										function(data) {
+											if(data.code == 200 && data.pan == 200) {
+												_this.yanzhengma2 = data.yanzhengma;
+												_this.shoujihao = data.phone;
+												_this.span = "";
+
+												//获取验证码计时开始
+												_this.timer = setInterval(function() {
+													_this.times--;
+													_this.fa = _this.times + "秒后重试";
+													_this.pan = 2;
+													if(_this.times <= 0) {
+														_this.fa = "发送验证码";
+														clearInterval(_this.timer);
+														_this.times = 60;
+													}
+													//console.log(times);
+												}, 1000);
+											} else {
+												_this.open4("发送错误");
+												_this.span = "";
+											}
+										});
+
+								} else {
+									_this.open4("手机号错误或没有注册");
+									_this.span = "";
+								}
+							}
+
+						});
+
+				},
+				//手机号点击登录
+				denglu() {
+					let _this = this;
+					if(_this.shoujihao == _this.phone) {
+						//判断验证码是否正确
+						if(_this.yanzhengma2 == _this.yanzhengma) {
+							_this.open2("登录成功");
+							/*if(_this.type==0) {*/
+							/*location.href = "主页.html";*/
+							/*}*/
+
+						} else {
+							_this.open4("验证码输入错误 ,重新输入");
+						}
+					} else {
+						_this.open3("请先发送验证码");
+					}
+				},
+				open2(me) {
+					this.$message({
+						message: me,
+						type: 'success'
+					});
+				},
+				open4(me) {
+					this.$message.error(me);
+				},
+				open3(me) {
+					this.$message({
+						message: me,
+						type: 'warning'
+					});
+				},
+			}
+		})
+		/*验证码图片*/
+		jigsaw.init({
+			el: document.getElementById('captcha'),
+		});
+	</script>
+
+</html>

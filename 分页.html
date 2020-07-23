@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="css/index.css" />
+		<style>
+			[v-cloak]{
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="vmfenye" v-cloak>
+			<el-container>
+				<el-header><img  ></el-header>
+				<el-container>
+					<el-aside width="200px">
+						<el-row class="tac">
+							<el-col >
+								<h5>菜单</h5>
+								<el-menu default-active="2" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+									<el-submenu index="1">
+										<template slot="title">
+											<i class="el-icon-location"></i>
+											<span>导航一</span>
+										</template>
+										<el-menu-item-group>
+											<template slot="title">分组一</template>
+											<el-menu-item index="1-1" ><a href="上机登录.html">登录</a></el-menu-item>
+										</el-menu-item-group>
+										
+										<el-submenu index="1-4">
+											<template slot="title">选项4</template>
+											<el-menu-item index="1-4-1">选项1</el-menu-item>
+										</el-submenu>
+									</el-submenu>
+								
+									<el-menu-item index="3" >
+										<i class="el-icon-document"></i>
+										<span slot="title">导航三</span>
+									</el-menu-item>
+									<el-menu-item index="4">
+										<i class="el-icon-setting"></i>
+										<span slot="title">导航四</span>
+									</el-menu-item>
+								</el-menu>
+							</el-col>
+						</el-row>
+					</el-aside>
+					<el-main>
+						<el-row>
+							<el-col>
+								<el-table :data="this.tableData.list" border style="width: 100%">
+									<el-table-column label="序号">
+										<template slot-scope="temp">
+											{{temp.$index+1}}
+										</template>
+									</el-table-column>
+									<el-table-column prop="username" label="用户名">
+									</el-table-column>
+									<el-table-column prop="jiaose" label="角色">
+									</el-table-column>
+
+									<el-table-column label="操作" width="180">
+										<template slot-scope="item">
+											<el-button type="primary" size="small" @click="dialogFormVisible = true">新增</el-button>
+											<el-dialog title="收货地址" :visible.sync="dialogFormVisible">
+												<el-form :model="usertest">
+													<el-form-item label="用户id" :label-width="formLabelWidth">
+														<el-input v-model="usertest.userid" autocomplete="off"></el-input>
+													</el-form-item>
+													<el-form-item label="密码" :label-width="formLabelWidth">
+														<el-input v-model="usertest.username" autocomplete="off"></el-input>
+													</el-form-item>
+													<el-form-item label="角色" :label-width="formLabelWidth">
+														<el-select v-model="usertest.jiaose" placeholder="请选择角色">
+															<el-option label="用户" value="用户"></el-option>
+															<el-option label="管理园" value="管理园"></el-option>
+														</el-select>
+													</el-form-item>
+												</el-form>
+												<div slot="footer" class="dialog-footer">
+													<el-button type="primary" @click="xingzeng">确 定</el-button>
+													<el-button @click="dialogFormVisible = false">取 消</el-button>
+
+												</div>
+											</el-dialog>
+											<el-button @click="deleteid(item.row.userid)" type="success" size="small">删除</el-button>
+										</template>
+									</el-table-column>
+							</el-col>
+						</el-row>
+
+						<el-row>
+							<el-col>
+								<el-pagination v-if="tableData.total!=0" :background="true" :pager-count="4" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="tableData.pageNum" :page-size="tableData.pageSize" :total="tableData.total" :page-sizes="[1,2,4]" layout="total, sizes, prev, pager, next, jumper">
+								</el-pagination>
+							</el-col>
+						</el-row>
+					</el-main>
+				</el-container>
+			</el-container>
+
+		</div>
+	</body>
+	<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="js/jq_ajax_config.js"></script>
+	<script type="text/javascript" src="js/vue.js"></script>
+	<script type="text/javascript" src="js/index.js"></script>
+	<script>
+		var vmfenye = new Vue({
+			el: "#vmfenye",
+			data: {
+				tableData: [],
+				usertest: {
+					userid: "",
+					username: "",
+					jiaose: "",
+				},
+				dialogTableVisible: false,
+				dialogFormVisible: false,
+			},
+			methods: {
+				page(pageNum, pageSize) {
+					let _this = this;
+					$.ajax("http://localhost:8080/api/show/pageinfo2", {
+						type: "post",
+						data: {
+							"pageNum": pageNum,
+							"pageSize": pageSize
+						},
+						dataType: "json",
+						success(items) {
+							_this.tableData = items.data;
+
+						}
+					})
+				},
+				xingzeng() {
+					let _this = this;
+					$.ajax('http://localhost:8080/api/show/xingzeng2', {
+						type: "post",
+						data: JSON.stringify(_this.usertest),
+						contentType: "application/json",
+						dataType: "json",
+						success(items) {
+							if(items.code == 200) {
+								alert("新增成功");
+							} else {
+								alert("新增失败");
+							}
+						}
+					});
+				},
+				deleteid(id) {
+					let _this = this;
+					$.getJSON(`http://localhost:8080/api/show/deleteutid/${id}`, function(data) {
+						if(data.code == 200) {
+							alert("成功");
+						} else {
+							alert("失败");
+						}
+					})
+				},
+				handleCurrentChange(val) {
+					this.page(val, this.tableData.pageSize);
+				},
+				handleSizeChange(val) {
+					this.page(this.tableData.pageNum, val);
+				},
+			},
+			mounted() {
+				this.page(1, 2);
+			}
+		});
+	</script>
+
+</html>
